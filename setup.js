@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const chalk = require('chalk');
+const { spawn, exec, execSync } = require('child_process');
 
 const type = process.argv[2];
 const rootDir = __dirname;
@@ -8,10 +9,12 @@ const rootDir = __dirname;
 if (type === '--full') {
     const angularDir = path.join(rootDir, 'src', 'angularapp');
 
+    execSync('npm cache clean --force');
+    
     if (fs.existsSync(angularDir)) {
         console.log(chalk.green('Angular already installed'));
 
-        runPreBuiltSetup();
+        installDep(angularDir);
     } else {
         installAnguler(angularDir);
     }
@@ -19,11 +22,35 @@ if (type === '--full') {
     runPreBuiltSetup();
 }
 
+function installDep(angularDir) {
+
+    process.chdir(path.join(angularDir, 'ngStudio'));
+    console.log(process.cwd(), chalk.green("Installing Angular deps..."));
+    const npmCmd = spawn('npm install', {
+        shell: true,
+        stdio: 'inherit'
+    });
+
+    npmCmd
+        .on('data', (data) => {
+            console.log(data.toString());
+        })
+        .on('error', (err) => {
+            console.log(err);
+            process.exit(1);
+        })
+        .on('close', () => {
+            console.log(chalk.green('Angular deps installed'));
+
+            runPreBuiltSetup();
+        });
+}
+
 function installAnguler(angularDir) {
     fs.mkdirSync(angularDir);
 
     process.chdir(angularDir);
-    const ngCmd = require('child_process').spawn(
+    const ngCmd = spawn(
         'ng new', ['ngStudio', '--style=css', '--routing', '--verbose'], {
             shell: true,
             stdio: 'inherit',
@@ -95,6 +122,15 @@ function createDirsInsidePreBuilt(prebuiltPath) {
             ''
         )
     );
+    
+    console.log(
+        require('chalk').green('prebuilt dir is cleaned and ready to work')
+    );
+
+    if(fs.existsSync(path.join(rootDir, 'src', 'electronapp', 'env.ts'))) {
+        return;
+    }
+    writeEnvForProject();
 }
 
 function runPreBuiltSetup() {
@@ -103,28 +139,23 @@ function runPreBuiltSetup() {
     const prebuiltPath = path.join(rootDir, 'prebuilt');
 
     if (fs.existsSync(prebuiltPath)) {
-        const dirs = fs.readdirSync(prebuiltPath);
 
-        if (dirs.length) {
-            dirs.forEach((dir) => {
-                fs.rmdirSync(path.join(prebuiltPath, dir));
-            });
-        } else {
+        exec('rm -rf prebuilt', (err, stdout, stderr) => {
+            if(err) {
+                console.log(chalk.red(`Delete prebuilt dir manually`));
+                return;
+            } 
             createDirsInsidePreBuilt(prebuiltPath);
-        }
+        });
+
     } else {
         fs.mkdirSync(prebuiltPath);
         createDirsInsidePreBuilt(prebuiltPath);
     }
-
-    console.log(
-        require('chalk').green('prebuilt dir is cleaned and ready to work')
-    );
-
-    writeEnvForProject();
 }
 
 function writeEnvForProject() {
+
     const json = {
         prod: {
             path: path.join('../', 'angularapp', 'index.html'),

@@ -7,7 +7,7 @@ function ngServerRunner() {
 
     ngServerProcess = spawn('ng serve', ['--open'], {
         shell: true,
-        cwd: path.join(__dirname, 'src', 'angular', 'ngStudio'),
+        cwd: path.join(__dirname, 'src', 'angularapp', 'ngStudio'),
         stdio: 'inherit',
     });
 
@@ -18,7 +18,7 @@ function ngServerRunner() {
         .on('error', (err) => {
             console.log(chalk.red(`Angular error: ${err} `));
         })
-        .on('exit', function(code) {
+        .on('close', function(code) {
             console.log(chalk.red('Angular server stopped:'));
         });
 }
@@ -27,7 +27,7 @@ function electronAppRunner() {
     electronAppProcess = spawn('npx electron .', {
         shell: true,
         stdio: 'inherit',
-        cwd: path.join(__dirname, 'prebuilt', 'electron'),
+        cwd: path.join(__dirname, 'prebuilt', 'electronapp'),
     });
 
     console.log(chalk.blue('Electron started:'));
@@ -39,7 +39,7 @@ function electronAppRunner() {
         .on('error', (err) => {
             console.log(chalk.red(`Electron error: ${err} `));
         })
-        .on('exit', function() {
+        .on('close', function() {
             console.log(chalk.red('Electron stopped:'));
         });
 }

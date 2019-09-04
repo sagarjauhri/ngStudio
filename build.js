@@ -14,7 +14,7 @@ switch (type) {
     case '--ng':
         const cmd = spawn('ng build', ['--prod', '--baseHref=./'], {
             shell: true,
-            cwd: path.join(rootDir, 'src', 'angular', 'ngStudio'),
+            cwd: path.join(rootDir, 'src', 'angularapp', 'ngStudio'),
         });
 
         cmd.stdout

@@ -10,10 +10,10 @@ const { spawn, execFile } = require('child_process');
 const killer = require('tree-kill');
 
 const tsProject = ts.createProject('tsconfig.json', {
-    outDir: 'prebuilt/electron/',
+    outDir: 'prebuilt/electronapp/',
 });
 
-process.chdir(path.join(__dirname, 'src', 'electron'));
+process.chdir(path.join(__dirname, 'src', 'electronapp'));
 
 const KILLSIG = 'SIGTERM';
 
@@ -25,7 +25,7 @@ const files = [
     '!**/node_modules{,/**}',
     '!build/',
     '!prebuilt/',
-    '!src/angular/',
+    '!src/angularapp/',
 ];
 
 task('linter', () => {
@@ -42,19 +42,19 @@ task('compileTs', () => {
         return merge2([
             result.dts.pipe(dest('.')),
             result.js
-            .pipe(
-                sourcemap.write('.', {
-                    includeContent: false,
-                    sourceRoot: './',
-                })
-            )
-            .pipe(
-                minify({
-                    ext: '.min.js',
-                    exclude: ['node_modules'],
-                    ignoreFiles: ['-min.js', '.ts', '.d.ts'],
-                })
-            )
+            // .pipe(
+            //     sourcemap.write('.', {
+            //         includeContent: false,
+            //         sourceRoot: './',
+            //     })
+            // )
+            // .pipe(
+            //     minify({
+            //         ext: '.min.js',
+            //         exclude: ['node_modules'],
+            //         ignoreFiles: ['-min.js', '.ts', '.d.ts'],
+            //     })
+            // )
             .pipe(dest(outDir)),
         ]);
     }
@@ -110,4 +110,4 @@ task('start-dev', (cb) => {
     });
 });
 
-task('default', series('start-dev', 'watcher'));
+task('default', series('watcher'));

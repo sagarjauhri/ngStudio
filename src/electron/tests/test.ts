@@ -1,1 +1,0 @@
-const nameR = 2;

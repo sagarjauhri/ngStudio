@@ -10,7 +10,7 @@ if (type === '--full') {
     const angularDir = path.join(rootDir, 'src', 'angularapp');
 
     execSync('npm cache clean --force');
-    
+
     if (fs.existsSync(angularDir)) {
         console.log(chalk.green('Angular already installed'));
 
@@ -23,12 +23,11 @@ if (type === '--full') {
 }
 
 function installDep(angularDir) {
-
     process.chdir(path.join(angularDir, 'ngStudio'));
-    console.log(process.cwd(), chalk.green("Installing Angular deps..."));
+    console.log(process.cwd(), chalk.green('Installing Angular deps...'));
     const npmCmd = spawn('npm install', {
         shell: true,
-        stdio: 'inherit'
+        stdio: 'inherit',
     });
 
     npmCmd
@@ -122,12 +121,12 @@ function createDirsInsidePreBuilt(prebuiltPath) {
             ''
         )
     );
-    
+
     console.log(
         require('chalk').green('prebuilt dir is cleaned and ready to work')
     );
 
-    if(fs.existsSync(path.join(rootDir, 'src', 'electronapp', 'env.ts'))) {
+    if (fs.existsSync(path.join(rootDir, 'src', 'electronapp', 'env.ts'))) {
         return;
     }
     writeEnvForProject();
@@ -139,15 +138,14 @@ function runPreBuiltSetup() {
     const prebuiltPath = path.join(rootDir, 'prebuilt');
 
     if (fs.existsSync(prebuiltPath)) {
-
         exec('rm -rf prebuilt', (err, stdout, stderr) => {
-            if(err) {
+            if (err) {
                 console.log(chalk.red(`Delete prebuilt dir manually`));
                 return;
-            } 
+            }
+            fs.mkdirSync(prebuiltPath);
             createDirsInsidePreBuilt(prebuiltPath);
         });
-
     } else {
         fs.mkdirSync(prebuiltPath);
         createDirsInsidePreBuilt(prebuiltPath);
@@ -155,7 +153,6 @@ function runPreBuiltSetup() {
 }
 
 function writeEnvForProject() {
-
     const json = {
         prod: {
             path: path.join('../', 'angularapp', 'index.html'),

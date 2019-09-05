@@ -6,7 +6,6 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "build-all": "echo \"Error: build is not supported yet\" && exit 1",
-        "preinstall": "npm cache clean --force",
         "postinstall": "node setup --full",
         "clean-prebuilt": "node setup",
         "build-ng": "node build --ng",

@@ -6,7 +6,7 @@ const merge2 = require('merge2');
 const sourcemap = require('gulp-sourcemaps');
 const chalk = require('chalk');
 const path = require('path');
-const { spawn, execFile } = require('child_process');
+const { spawn } = require('child_process');
 const killer = require('tree-kill');
 
 const tsProject = ts.createProject('tsconfig.json', {
@@ -25,7 +25,7 @@ const files = [
     '!**/node_modules{,/**}',
     '!build/',
     '!prebuilt/',
-    '!src/angularapp/',
+    '!src/angularapp/ngStudio/',
 ];
 
 task('linter', () => {
@@ -82,32 +82,81 @@ task('compileTs', () => {
     return result;
 });
 
-task('watcher', (cb) => {
-    watch(files, { events: ['all'] }, series('linter', 'compileTs', 'start-dev'));
-});
+let electronAppProcess = null;
 
-let appRunning = null;
+function electronRunner() {
+    electronAppProcess = spawn('npx electron .', {
+        shell: true,
+        stdio: 'inherit',
+        cwd: path.join(__dirname, 'prebuilt', 'electronapp'),
+    });
+
+    console.log(chalk.blue('Starting Electron:...'));
+
+    electronAppProcess
+        .on('data', (d) => {
+            console.log(d.toString());
+        })
+        .on('error', (err) => {
+            console.log(chalk.red(`Electron error: ${err} `));
+        })
+        .on('close', function() {
+            console.log(chalk.red('Electron stopped:'));
+            electronAppProcess = null;
+        });
+}
+
+let ngServerProcess = null;
+
+function ngServerRunner() {
+    console.log(chalk.blue('Angular dev build started:'));
+
+    ngServerProcess = spawn('ng serve', ['--open'], {
+        shell: true,
+        cwd: path.join(__dirname, 'src', 'angularapp', 'ngStudio'),
+        stdio: 'inherit',
+    });
+
+    ngServerProcess
+        .on('data', (d) => {
+            console.log(d.toString());
+        })
+        .on('error', (err) => {
+            console.log(chalk.red(`Angular error: ${err} `));
+        })
+        .on('close', function(code) {
+            console.log(chalk.red('Angular server stopped:'));
+        });
+}
 
 task('start-dev', (cb) => {
-    if (appRunning) {
-        appRunning.send('kill');
-        appRunning = null;
+    if (ngServerProcess === null) {
+        ngServerRunner();
     }
 
-    Promise.resolve('tick').then(() => {
-        appRunning = spawn('node', ['apprunners'], {
-                stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
-                cwd: path.join(__dirname),
-            })
-            .on('data', (data) => {
-                console.log(data.toString());
-            })
-            .on('error', (err) => {
-                console.log(chalk.red(`error inside start-dev task ${err}`));
-            });
+    if (electronAppProcess) {
+        killer(electronAppProcess.pid, (err) => {
+            if (err) {
+                console.log(
+                    chalk.red(
+                        'Error while stopping electron process, exit it manually'
+                    )
+                );
+                electronAppProcess = null;
+            } else {
+                console.log(chalk.green('Restarting Electron...'));
+                electronRunner();
+            }
+        });
+    } else {
+        electronRunner();
+    }
 
-        cb();
-    });
+    cb();
+});
+
+task('watcher', (cb) => {
+    watch(files, { events: ['all'] }, series('linter', 'compileTs', 'start-dev'));
 });
 
 task('default', series('watcher'));

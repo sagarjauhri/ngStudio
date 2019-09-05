@@ -9,12 +9,23 @@ const rootDir = __dirname;
 if (type === '--full') {
     const angularDir = path.join(rootDir, 'src', 'angularapp');
 
-    execSync('npm cache clean --force');
-
     if (fs.existsSync(angularDir)) {
         console.log(chalk.green('Angular already installed'));
 
-        installDep(angularDir);
+        if (
+            fs.existsSync(
+                path.join(angularDir, 'ngStudio', 'package-lock.json')
+            )
+        ) {
+            console.log(
+                chalk.yellow(
+                    `Angular dir: 'package-lock.json' already exists.Skipping deps install for angular`
+                )
+            );
+            runPreBuiltSetup();
+        } else {
+            installDep(angularDir);
+        }
     } else {
         installAnguler(angularDir);
     }
